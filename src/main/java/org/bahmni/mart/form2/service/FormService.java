@@ -57,7 +57,9 @@ public class FormService {
     }
 
     private List<Map<String, Object>> getLatestFormNamesWithVersion() {
-        return openmrsDbTemplate.queryForList("SELECT name , MAX(version) as version FROM form GROUP BY name");
+        String query = "SELECT name , CAST(MAX(CAST(version AS UNSIGNED)) AS CHAR) as version " +
+                    "FROM form GROUP BY name";
+        return openmrsDbTemplate.queryForList(query);
     }
 
     public Map<String, String> getFormNameTranslations(String locale) {

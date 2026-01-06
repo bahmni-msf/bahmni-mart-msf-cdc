@@ -7,7 +7,7 @@ FROM form
   INNER JOIN form_resource fr ON form.form_id = fr.form_id and form.name = fr.name
   INNER JOIN (select
                 name,
-                MAX(version) as version
+                CAST(MAX(CAST(version AS UNSIGNED)) AS CHAR) as version
               from form
               where published = true
               group by name) as MaxForm
