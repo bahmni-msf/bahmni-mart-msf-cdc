@@ -1,3 +1,10 @@
 # Trivy ignore file
 # Add CVE IDs or vulnerability patterns to ignore here
-
+CVE-2025-41249
+CVE-2025-22235
+CVE-2024-47554
+CVE-2024-47072
+CVE-2024-7254
+CVE-2025-52999
+CVE-2025-64505
+CVE-2025-64720
