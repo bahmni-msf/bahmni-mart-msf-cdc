@@ -1,0 +1,57 @@
+name: Build and Publish bahmni-mart Image
+
+on:
+  push:
+    branches:
+      - ocp-msf-dev
+    workflow_dispatch:
+
+jobs:
+  docker-build-publish:
+    name: Docker Build & Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull Github code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'corretto'
+
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build
+
+      - name: Build docker image
+        run: docker build -t mart:latest -f package/docker/Dockerfile .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'mart:latest'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          trivyignores: ./.trivyignore
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      - name: Set Image tag variable
+        run: echo "ARTIFACT_VERSION=$(cat package/.appversion)-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+
+      - name: Tag and Push docker image to Docker Hub
+        env:
+          REPOSITORY: ${{ secrets.DOCKER_HUB_USERNAME }}/bahmni-mart-msf-cdc
+          IMAGE_TAG: ${{ env.ARTIFACT_VERSION }}
+        run: |
+          docker tag mart:latest $REPOSITORY:latest
+          docker tag mart:latest $REPOSITORY:$IMAGE_TAG
+          docker push $REPOSITORY:$IMAGE_TAG
+          docker push $REPOSITORY:latest
+
